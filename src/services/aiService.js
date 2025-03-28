@@ -1,4 +1,4 @@
-const OPENAI_API_KEY = process.env.api_key;
+const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_API_KEY;
 const API_URL = 'https://api.openai.com/v1/chat/completions';
 
 export const generateRecipes = async (ingredients) => {
@@ -31,14 +31,14 @@ export const generateRecipes = async (ingredients) => {
         'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo-instruct",
+        model: "gpt-3.5-turbo",
         messages: [
           {
             role: "user",
             content: prompt
           }
         ],
-        temperature: 0,
+        temperature: 0.7,
         max_tokens: 3000
       })
     });
@@ -49,7 +49,12 @@ export const generateRecipes = async (ingredients) => {
 
     const data = await response.json();
     const recipeText = data.choices[0].message.content;
-    return JSON.parse(recipeText).recipes;
+    try {
+      return JSON.parse(recipeText).recipes;
+    } catch (error) {
+      console.error('Error parsing recipe JSON:', error);
+      throw new Error('Failed to parse recipe data');
+    }
   } catch (error) {
     console.error('Error generating recipes:', error);
     throw error;

@@ -132,14 +132,19 @@ function App() {
                 placeholder="Type your ingredients"
                 value={newIngredient}
                 onChange={(e) => setNewIngredient(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddIngredient()}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddIngredient();
+                  }
+                }}
                 sx={{ mb: 2 }}
               />
               <Button
                 fullWidth
                 variant="contained"
                 onClick={handleGenerateRecipes}
-                disabled={ingredients.length === 0 || loading}
+                disabled={ingredients.length < 3 || loading}
                 sx={{
                   height: 48,
                   fontSize: '1rem',
