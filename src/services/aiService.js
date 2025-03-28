@@ -22,7 +22,7 @@ export const generateRecipes = async (ingredients) => {
           role: "user",
           content: prompt
         }],
-        max_tokens: 2000,
+        max_tokens: 500,
         temperature: 0.7
       })
     });
