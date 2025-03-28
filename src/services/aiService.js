@@ -15,7 +15,7 @@ export const generateRecipes = async (ingredients) => {
         'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo-instruct",
+        model: "gpt-3.5-turbo",
         prompt: prompt,
         max_tokens: 2000,
         temperature: 0.7
