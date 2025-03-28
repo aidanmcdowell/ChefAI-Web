@@ -1,4 +1,5 @@
-const OPENAI_API_KEY = process.env.api_key;
+const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_API_KEY;
+console.log('API Key available:', !!OPENAI_API_KEY); // Will log true/false without exposing the key
 
 export const generateRecipes = async (ingredients) => {
   try {
@@ -8,7 +9,8 @@ export const generateRecipes = async (ingredients) => {
     2. List of ingredients needed (including quantities)
     3. Step-by-step cooking instructions`;
 
-    const response = await fetch('https://api.openai.com/v1/completions', {
+    console.log('Making API request...');
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -16,18 +18,23 @@ export const generateRecipes = async (ingredients) => {
       },
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
-        prompt: prompt,
+        messages: [{
+          role: "user",
+          content: messages
+        }],
         max_tokens: 2000,
         temperature: 0.7
       })
     });
 
     if (!response.ok) {
+      const errorData = await response.json();
+      console.error('API Error:', errorData);
       throw new Error('Failed to generate recipes');
     }
 
     const data = await response.json();
-    const recipes = data.choices[0].text.split('\n\n').filter(r => r.trim()).map(recipe => {
+    const recipes = data.choices[0].message.content.split('\n\n').filter(r => r.trim()).map(recipe => {
       const lines = recipe.split('\n').filter(l => l.trim());
       return {
         name: lines[0].replace(/^\d+\.\s*/, ''),
