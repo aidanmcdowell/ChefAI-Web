@@ -28,42 +28,66 @@ export const generateRecipes = async (ingredients) => {
     const result = await model.generateContent(prompt);
     const text = result.response.text();
     
-    // Split into individual recipes and clean up formatting
-    const recipeBlocks = text
-      .replace(/\*\*/g, '') // Remove any asterisks
-      .split(/(?=Recipe \d:|[A-Za-z]+ Rice|[A-Za-z]+ Chicken|[A-Za-z]+ Lettuce)/)
-      .filter(block => block.trim());
+    // Clean up the text first
+    const cleanText = text
+      .replace(/\*\*/g, '')  // Remove asterisks
+      .replace(/Recipe \d+:/g, '') // Remove "Recipe N:" prefixes
+      .trim();
     
+    // Split into recipe blocks using double newlines
+    const recipeBlocks = cleanText
+      .split(/\n\n+/)
+      .filter(block => block.trim())
+      .reduce((recipes, block) => {
+        // If this block starts with "Ingredients" or "Instructions", append it to the last recipe
+        if (block.trim().toLowerCase().startsWith('ingredients') || 
+            block.trim().toLowerCase().startsWith('instructions')) {
+          if (recipes.length > 0) {
+            recipes[recipes.length - 1] += '\n\n' + block;
+          }
+          return recipes;
+        }
+        // Otherwise, it's a new recipe
+        recipes.push(block);
+        return recipes;
+      }, []);
+
     // Parse each recipe block
     const recipes = recipeBlocks.map(block => {
-      const lines = block.split('\n').map(line => line.trim()).filter(line => line);
+      const sections = block.split(/\n\n+/);
       
-      // Get recipe name (first non-empty line)
-      const name = lines[0].replace(/Recipe \d:\s*/, '').trim();
+      // Get recipe name (first section)
+      const name = sections[0].trim();
       
-      // Find section boundaries
-      const ingredientsStart = lines.findIndex(line => 
-        line.toLowerCase().includes('ingredients:') || 
-        line.toLowerCase() === 'ingredients'
-      );
-      const instructionsStart = lines.findIndex(line => 
-        line.toLowerCase().includes('instructions:') || 
-        line.toLowerCase() === 'instructions'
+      // Find ingredients section
+      const ingredientsSection = sections.find(s => 
+        s.toLowerCase().startsWith('ingredients')
       );
       
-      // Extract and clean ingredients
-      const ingredients = lines
-        .slice(ingredientsStart + 1, instructionsStart)
-        .filter(line => line.startsWith('-') || line.startsWith('*') || /^\d+\./.test(line))
-        .map(line => line.replace(/^[-*\d.]\s*/, '').trim())
-        .filter(line => line && !line.toLowerCase().includes('ingredients') && !line.toLowerCase().includes('instructions'));
+      // Find instructions section
+      const instructionsSection = sections.find(s => 
+        s.toLowerCase().startsWith('instructions')
+      );
       
-      // Extract and clean instructions
-      const instructions = lines
-        .slice(instructionsStart + 1)
-        .filter(line => /^\d+\./.test(line))
-        .map(line => line.replace(/^\d+\.\s*/, '').trim())
-        .filter(line => line);
+      // Parse ingredients
+      const ingredients = ingredientsSection
+        ? ingredientsSection
+            .split('\n')
+            .slice(1) // Skip "Ingredients:" header
+            .map(line => line.trim())
+            .filter(line => line && (line.startsWith('-') || line.startsWith('*')))
+            .map(line => line.replace(/^[-*]\s*/, '').trim())
+        : [];
+      
+      // Parse instructions
+      const instructions = instructionsSection
+        ? instructionsSection
+            .split('\n')
+            .slice(1) // Skip "Instructions:" header
+            .map(line => line.trim())
+            .filter(line => line && /^\d+\./.test(line))
+            .map(line => line.replace(/^\d+\.\s*/, '').trim())
+        : [];
       
       return {
         name,
