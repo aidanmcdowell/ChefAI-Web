@@ -126,20 +126,32 @@ function App() {
             </Typography>
             
             <Box sx={{ mb: 4 }}>
-              <TextField
-                fullWidth
-                variant="outlined"
-                placeholder="Type your ingredients"
-                value={newIngredient}
-                onChange={(e) => setNewIngredient(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddIngredient();
-                  }
-                }}
-                sx={{ mb: 2 }}
-              />
+              <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                <TextField
+                  fullWidth
+                  variant="outlined"
+                  placeholder="Type your ingredients"
+                  value={newIngredient}
+                  onChange={(e) => setNewIngredient(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddIngredient();
+                    }
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={handleAddIngredient}
+                  disabled={!newIngredient.trim()}
+                  sx={{
+                    minWidth: '100px',
+                    height: '56px'
+                  }}
+                >
+                  Add
+                </Button>
+              </Box>
               <Button
                 fullWidth
                 variant="contained"
