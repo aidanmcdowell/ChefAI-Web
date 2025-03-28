@@ -1,37 +1,20 @@
 import React, { useState } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Container, Box, Typography, TextField, Button, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Paper, CircularProgress, Divider } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { Container, Box, Typography, TextField, Button, List, ListItem, ListItemText, IconButton } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import { generateRecipes } from './services/aiService';
 
 const theme = createTheme({
   palette: {
-    mode: 'light',
     primary: {
-      main: '#F4A460', // Orange accent color from the image
-    },
-    background: {
-      default: '#FFFFFF',
-      paper: '#F8F8F8',
-    },
-    text: {
-      primary: '#000000',
-      secondary: '#666666',
+      main: '#F4A460',
     }
   },
   typography: {
     h1: {
       fontSize: '2rem',
       fontWeight: 700,
-    },
-    h6: {
-      fontSize: '1.25rem',
-      fontWeight: 600,
     },
     subtitle1: {
       fontSize: '0.875rem',
@@ -56,45 +39,19 @@ const theme = createTheme({
             backgroundColor: '#F0F0F0',
             '& fieldset': {
               borderColor: 'transparent',
-            },
-            '&:hover fieldset': {
-              borderColor: 'transparent',
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: '#F4A460',
-            },
+            }
           },
         },
       },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          borderRadius: 20,
-          boxShadow: 'none',
-        },
-      },
-    },
+    }
   },
 });
 
 function App() {
-  const [ingredients, setIngredients] = useState([]);
   const [newIngredient, setNewIngredient] = useState('');
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const handleAddIngredient = () => {
-    if (newIngredient.trim()) {
-      setIngredients([...ingredients, newIngredient.trim()]);
-      setNewIngredient('');
-    }
-  };
-
-  const handleRemoveIngredient = (index) => {
-    setIngredients(ingredients.filter((_, i) => i !== index));
-  };
 
   const handleGenerateRecipes = async () => {
     const ingredientsList = newIngredient.split(',').map(i => i.trim()).filter(i => i.length > 0);
@@ -140,57 +97,17 @@ function App() {
                 variant="contained"
                 onClick={handleGenerateRecipes}
                 disabled={newIngredient.split(',').filter(i => i.trim().length > 0).length < 3 || loading}
-                sx={{
-                  height: 48,
-                  fontSize: '1rem',
-                }}
+                sx={{ height: 48, fontSize: '1rem' }}
               >
                 {loading ? 'Creating...' : 'Create'}
               </Button>
             </Box>
-
-            {ingredients.length > 0 && (
-              <>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6">History</Typography>
-                  <Button color="primary">See all</Button>
-                </Box>
-                <List>
-                  {ingredients.map((ingredient, index) => (
-                    <ListItem
-                      key={index}
-                      sx={{
-                        bgcolor: 'background.paper',
-                        borderRadius: 2,
-                        mb: 1,
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <AccessTimeIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                        <ListItemText primary={ingredient} />
-                      </Box>
-                      <ListItemSecondaryAction>
-                        <IconButton
-                          edge="end"
-                          onClick={() => handleRemoveIngredient(index)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                  ))}
-                </List>
-              </>
-            )}
           </Box>
         ) : (
           <Box sx={{ my: 4 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+            <Box sx={{ mb: 4 }}>
               <IconButton onClick={() => setRecipes([])}>
                 <ArrowBackIcon />
-              </IconButton>
-              <IconButton>
-                <BookmarkBorderIcon />
               </IconButton>
             </Box>
             
