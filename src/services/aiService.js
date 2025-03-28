@@ -1,5 +1,7 @@
-const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_API_KEY;
-console.log('API Key available:', !!OPENAI_API_KEY); // Will log true/false without exposing the key
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export const generateRecipes = async (ingredients) => {
   try {
@@ -7,34 +9,15 @@ export const generateRecipes = async (ingredients) => {
     For each recipe, provide:
     1. Recipe name
     2. List of ingredients needed (including quantities)
-    3. Step-by-step cooking instructions`;
+    3. Step-by-step cooking instructions
 
-    console.log('Making API request...');
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        messages: [{
-          role: "user",
-          content: prompt
-        }],
-        max_tokens: 500,
-        temperature: 0.7
-      })
-    });
+    Format each recipe with clear sections for the name, ingredients list, and numbered instructions.`;
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('API Error:', errorData);
-      throw new Error('Failed to generate recipes');
-    }
-
-    const data = await response.json();
-    const recipes = data.choices[0].message.content.split('\n\n').filter(r => r.trim()).map(recipe => {
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    
+    // Parse the text response into our recipe format
+    const recipes = text.split('\n\n').filter(r => r.trim()).map(recipe => {
       const lines = recipe.split('\n').filter(l => l.trim());
       return {
         name: lines[0].replace(/^\d+\.\s*/, ''),
