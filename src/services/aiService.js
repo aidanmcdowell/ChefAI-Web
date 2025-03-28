@@ -5,51 +5,65 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export const generateRecipes = async (ingredients) => {
   try {
-    const prompt = `Generate 3 creative recipes using some or all of these ingredients: ${ingredients.join(', ')}. 
+    const prompt = `Generate 3 creative recipes using ONLY these ingredients (no additional ingredients allowed): ${ingredients.join(', ')}. 
+    Each recipe must ONLY use some combination of these ingredients and nothing else.
+    
     For each recipe, provide:
-    1. Recipe name
-    2. List of all required ingredients with quantities
-    3. Clear step-by-step cooking instructions
-
-    Format each recipe like this:
-    Recipe Name
+    1. Recipe name (without any asterisks or special formatting)
+    2. List of ingredients with quantities (using only the provided ingredients)
+    3. Step-by-step cooking instructions
+    
+    Format each recipe exactly like this example:
+    
+    Simple Rice Bowl
+    
     Ingredients:
-    - ingredient 1
-    - ingredient 2
+    - 1 cup rice
+    - 2 chicken breasts
     
     Instructions:
-    1. First step
-    2. Second step`;
+    1. Cook the rice
+    2. Cook the chicken`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
     
-    // Split into individual recipes
-    const recipeBlocks = text.split(/(?=Recipe \d:)/).filter(block => block.trim());
+    // Split into individual recipes and clean up formatting
+    const recipeBlocks = text
+      .replace(/\*\*/g, '') // Remove any asterisks
+      .split(/(?=Recipe \d:|[A-Za-z]+ Rice|[A-Za-z]+ Chicken|[A-Za-z]+ Lettuce)/)
+      .filter(block => block.trim());
     
     // Parse each recipe block
     const recipes = recipeBlocks.map(block => {
       const lines = block.split('\n').map(line => line.trim()).filter(line => line);
       
-      // Get recipe name
+      // Get recipe name (first non-empty line)
       const name = lines[0].replace(/Recipe \d:\s*/, '').trim();
       
       // Find section boundaries
-      const ingredientsStart = lines.findIndex(line => line.toLowerCase().includes('ingredients:'));
-      const instructionsStart = lines.findIndex(line => line.toLowerCase().includes('instructions:'));
-      const instructionsEnd = lines.length;
+      const ingredientsStart = lines.findIndex(line => 
+        line.toLowerCase().includes('ingredients:') || 
+        line.toLowerCase() === 'ingredients'
+      );
+      const instructionsStart = lines.findIndex(line => 
+        line.toLowerCase().includes('instructions:') || 
+        line.toLowerCase() === 'instructions'
+      );
       
       // Extract and clean ingredients
       const ingredients = lines
         .slice(ingredientsStart + 1, instructionsStart)
-        .filter(line => line.startsWith('-') || line.startsWith('*'))
-        .map(line => line.replace(/^[-*]\s*/, '').trim());
+        .filter(line => line.startsWith('-') || line.startsWith('*') || /^\d+\./.test(line))
+        .map(line => line.replace(/^[-*\d.]\s*/, '').trim())
+        .filter(line => line && !line.toLowerCase().includes('ingredients') && !line.toLowerCase().includes('instructions'));
       
       // Extract and clean instructions
       const instructions = lines
-        .slice(instructionsStart + 1, instructionsEnd)
+        .slice(instructionsStart + 1)
         .filter(line => /^\d+\./.test(line))
-        .map(line => line.replace(/^\d+\.\s*/, '').trim());
+        .map(line => line.replace(/^\d+\.\s*/, '').trim())
+        .filter(line => line);
       
       return {
         name,
