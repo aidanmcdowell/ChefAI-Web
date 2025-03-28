@@ -3,23 +3,19 @@ const API_URL = 'https://api.openai.com/v1/chat/completions';
 
 export const generateRecipes = async (ingredients) => {
   try {
-    const prompt = `Generate 3 creative recipes using these ingredients: ${ingredients.join(', ')}. 
+    const prompt = `Generate 3 creative recipes using some or all of these ingredients: ${ingredients.join(', ')}. 
     For each recipe, provide:
     1. Recipe name
     2. List of ingredients needed (including quantities)
     3. Step-by-step cooking instructions
-    4. Estimated cooking time
-    5. Difficulty level
     
-    Format the response as JSON with the following structure:
+    Format the response as JSON with this structure:
     {
       "recipes": [
         {
           "name": "Recipe Name",
-          "ingredients": ["ingredient 1", "ingredient 2", ...],
-          "instructions": ["step 1", "step 2", ...],
-          "cookingTime": "XX minutes",
-          "difficulty": "Easy/Medium/Hard"
+          "ingredients": ["ingredient 1", "ingredient 2"],
+          "instructions": ["step 1", "step 2"]
         }
       ]
     }`;
@@ -34,23 +30,38 @@ export const generateRecipes = async (ingredients) => {
         model: "gpt-3.5-turbo",
         messages: [
           {
+            role: "system",
+            content: "You are a helpful cooking assistant that generates recipes in JSON format."
+          },
+          {
             role: "user",
             content: prompt
           }
         ],
         temperature: 0.7,
-        max_tokens: 3000
+        max_tokens: 2000,
+        response_format: { type: "json_object" }
       })
     });
 
     if (!response.ok) {
-      throw new Error('Failed to generate recipes');
+      const errorData = await response.json();
+      console.error('API Error:', errorData);
+      throw new Error(errorData.error?.message || 'Failed to generate recipes');
     }
 
     const data = await response.json();
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid API response format');
+    }
+
     const recipeText = data.choices[0].message.content;
     try {
-      return JSON.parse(recipeText).recipes;
+      const parsed = JSON.parse(recipeText);
+      if (!parsed.recipes || !Array.isArray(parsed.recipes)) {
+        throw new Error('Invalid recipe data format');
+      }
+      return parsed.recipes;
     } catch (error) {
       console.error('Error parsing recipe JSON:', error);
       throw new Error('Failed to parse recipe data');

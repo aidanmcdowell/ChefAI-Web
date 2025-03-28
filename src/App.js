@@ -97,12 +97,13 @@ function App() {
   };
 
   const handleGenerateRecipes = async () => {
-    if (ingredients.length === 0) return;
+    const ingredientsList = newIngredient.split(',').map(i => i.trim()).filter(i => i.length > 0);
+    if (ingredientsList.length < 3) return;
     
     setLoading(true);
     setError('');
     try {
-      const generatedRecipes = await generateRecipes(ingredients);
+      const generatedRecipes = await generateRecipes(ingredientsList);
       setRecipes(generatedRecipes);
     } catch (error) {
       console.error('Error generating recipes:', error);
@@ -122,41 +123,23 @@ function App() {
               What can we make?
             </Typography>
             <Typography variant="subtitle1" gutterBottom sx={{ mb: 3 }}>
-              Enter 3 or more ingredients
+              Enter 3 or more ingredients, separated by commas
             </Typography>
             
             <Box sx={{ mb: 4 }}>
-              <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  placeholder="Type your ingredients"
-                  value={newIngredient}
-                  onChange={(e) => setNewIngredient(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddIngredient();
-                    }
-                  }}
-                />
-                <Button
-                  variant="contained"
-                  onClick={handleAddIngredient}
-                  disabled={!newIngredient.trim()}
-                  sx={{
-                    minWidth: '100px',
-                    height: '56px'
-                  }}
-                >
-                  Add
-                </Button>
-              </Box>
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Example: chicken, lettuce, rice"
+                value={newIngredient}
+                onChange={(e) => setNewIngredient(e.target.value)}
+                sx={{ mb: 2 }}
+              />
               <Button
                 fullWidth
                 variant="contained"
                 onClick={handleGenerateRecipes}
-                disabled={ingredients.length < 3 || loading}
+                disabled={newIngredient.split(',').filter(i => i.trim().length > 0).length < 3 || loading}
                 sx={{
                   height: 48,
                   fontSize: '1rem',
